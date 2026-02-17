@@ -1,0 +1,15 @@
+{
+  "name": "crt-overlay",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "sharp": "^0.34.5",
+    "vite": "^6.0.0",
+    "vite-plugin-web-extension": "^4.0.0"
+  },
+  "dependencies": {}
+}

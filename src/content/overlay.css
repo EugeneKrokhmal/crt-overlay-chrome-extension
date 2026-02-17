@@ -1,0 +1,125 @@
+/* CRT overlay – all layers are pointer-events: none and non-focusable */
+#crt-overlay-root {
+  --crt-z-index: 2147483646;
+  --crt-curvature-radius-base: 8;
+  --crt-glow-blur-px: 80;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: var(--crt-z-index);
+  overflow: hidden;
+  tabindex: -1;
+  display: none;
+}
+
+#crt-overlay-root[data-visible] {
+  display: block;
+}
+
+#crt-overlay-root * {
+  pointer-events: none;
+}
+
+/* Curvature wrapper – subtle barrel via perspective + border-radius */
+#crt-curve-wrap {
+  position: absolute;
+  inset: 0;
+  perspective: 1200px;
+  overflow: hidden;
+  --crt-curvature: 0.15;
+}
+
+#crt-curve-inner {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--crt-curvature-radius-base, 8) * 1%);
+  transform: scale(1);
+  box-shadow: inset 0 0 var(--crt-glow-blur-px, 80)px rgba(0, 0, 0, var(--crt-glow, 0.1));
+}
+
+/* Scanlines – repeating gradient */
+#crt-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 1px,
+    rgba(0, 0, 0, var(--crt-scanline, 0.35)) 1px,
+    rgba(0, 0, 0, var(--crt-scanline, 0.35)) 2px
+  );
+  background-size: 100% 2px;
+}
+
+/* Vignette – radial gradient */
+#crt-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 70% 70% at 50% 50%,
+    transparent 0%,
+    transparent 50%,
+    rgba(0, 0, 0, var(--crt-vignette, 0.5)) 100%
+  );
+}
+
+/* Optional chromatic edge glow */
+#crt-chromatic {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 2px 0 20px rgba(255, 0, 0, 0.03),
+    inset -2px 0 20px rgba(0, 200, 255, 0.03),
+    inset 0 2px 20px rgba(255, 255, 0, 0.02),
+    inset 0 -2px 20px rgba(0, 255, 100, 0.02);
+}
+
+/* VHS glitches: phase (color fringing) – only visible when data-glitches */
+#crt-glitch-phase {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  mix-blend-mode: screen;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 0, 80, 0.12) 25%,
+    transparent 50%,
+    rgba(0, 200, 255, 0.12) 75%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: crt-phase-drift 8s ease-in-out infinite;
+}
+
+#crt-overlay-root[data-glitches] #crt-glitch-phase {
+  opacity: var(--crt-glitch-phase, 0.3);
+}
+
+@keyframes crt-phase-drift {
+  0%, 100% { background-position: 0% 0; }
+  50% { background-position: 100% 0; }
+}
+
+/* VHS glitches: video noise (canvas) */
+#crt-glitch-noise-wrap {
+  position: absolute;
+  inset: 0;
+  display: none;
+  pointer-events: none;
+}
+
+#crt-overlay-root[data-glitches] #crt-glitch-noise-wrap {
+  display: block;
+}
+
+#crt-glitch-noise {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  image-rendering: pixelated;
+  opacity: var(--crt-glitch-noise, 0.15);
+}

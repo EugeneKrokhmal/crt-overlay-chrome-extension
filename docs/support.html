@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRT Monitor Overlay – Support &amp; Privacy</title>
+  <meta name="description" content="Support and privacy policy for CRT Monitor Overlay Chrome extension. Retro CRT-style overlay and optional VHS sound. No data collection." />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+      color: #1a1a1a;
+      background: #fafafa;
+    }
+    h1 { font-size: 1.5rem; margin-top: 0; }
+    h2 { font-size: 1.15rem; margin-top: 28px; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    p { margin: 0 0 12px; }
+    ul { margin: 0 0 12px; padding-left: 1.4em; }
+    a { color: #0066cc; }
+    .muted { color: #555; font-size: 0.95em; }
+    section { margin-bottom: 24px; }
+  </style>
+</head>
+<body>
+  <h1>CRT Monitor Overlay</h1>
+  <p class="muted">Chrome extension – Support, usage, and privacy</p>
+
+  <section>
+    <h2>What it does</h2>
+    <p>CRT Monitor Overlay adds a retro CRT-style visual effect on web pages: scanlines, vignette, screen curvature, and optional VHS-style sound (muffled audio + light hiss) for in-page video and audio. The overlay does not block clicks or keyboard—you can use the page normally.</p>
+    <ul>
+      <li>Toggle overlay on or off from the extension popup or with <strong>Ctrl+Shift+C</strong> (Windows/Linux) or <strong>Command+Shift+C</strong> (Mac).</li>
+      <li>Adjust effect strength with sliders (scanlines, vignette, curvature, glow, VHS sound, and glitches).</li>
+      <li>Settings are saved locally and apply to all tabs.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>How to use</h2>
+    <ol>
+      <li>Click the extension icon in the Chrome toolbar to open the popup.</li>
+      <li>Turn <strong>Enable overlay</strong> on. Use the sliders to tune the effect.</li>
+      <li>Optionally enable <strong>VHS sound</strong> and <strong>VHS glitches</strong> for a more retro look and sound.</li>
+      <li>Use the keyboard shortcut to toggle the overlay without opening the popup.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Privacy policy</h2>
+    <p><strong>CRT Monitor Overlay does not collect, store on external servers, or transmit any personal data.</strong></p>
+    <ul>
+      <li>Your preferences (e.g. overlay on/off, slider values) are stored only on your device using Chrome’s local storage (<code>chrome.storage.local</code>).</li>
+      <li>No analytics, no tracking, no account, no server. The extension does not send data to the developer or any third party.</li>
+      <li>Audio processing (VHS sound) is done in your browser only and is not recorded or sent anywhere.</li>
+    </ul>
+    <p>This policy applies to the extension as distributed on the Chrome Web Store. If you obtained the extension from another source, that source may have different practices.</p>
+  </section>
+
+  <section>
+    <h2>Why these permissions?</h2>
+    <p>Chrome asks for the following. Here is how CRT Monitor Overlay uses them:</p>
+    <ul>
+      <li><strong>Storage</strong> – To save your settings (on/off, slider values) on your device so they persist across sessions and tabs.</li>
+      <li><strong>Active tab</strong> – To know which tab is active when you open the popup, so the extension can work correctly.</li>
+      <li><strong>Tabs</strong> – To apply your overlay and settings to all open tabs when you change them, and to keep new tabs in sync.</li>
+    </ul>
+    <p>No permission is used to read your browsing history, track you, or send data off your device.</p>
+  </section>
+
+  <section>
+    <h2>FAQ</h2>
+    <p><strong>Does it work on every site?</strong> The overlay can run on any page. The VHS sound effect only affects &lt;audio&gt; and &lt;video&gt; that the page loads directly; it does not change audio inside iframes (e.g. many embedded YouTube players) due to browser security.</p>
+    <p><strong>Can I turn it off?</strong> Yes. Use the popup to disable the overlay, or the same keyboard shortcut to toggle. Your last setting is remembered.</p>
+    <p><strong>Is it open source?</strong> If the extension is published with a linked source or repository, you can inspect the code there.</p>
+  </section>
+
+  <section>
+    <h2>Support &amp; contact</h2>
+    <p>For bugs, feature ideas, or questions:</p>
+    <ul>
+      <li>If you installed from the Chrome Web Store, use the “Support” link on the store listing, or the developer contact shown there.</li>
+      <li>If you have the source (e.g. from GitHub), open an issue in that repository.</li>
+    </ul>
+    <p class="muted">Last updated: 2025. Extension version: 0.1.0.</p>
+  </section>
+</body>
+</html>
