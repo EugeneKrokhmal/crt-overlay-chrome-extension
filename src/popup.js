@@ -22,9 +22,13 @@ const POPUP_IDS = {
   VHS_GLITCHES: "crt-vhs-glitches",
   GLITCH_PHASE_LEVEL: "glitch-phase-level",
   GLITCH_NOISE_LEVEL: "glitch-noise-level",
+  GLITCH_TRACKING_LEVEL: "glitch-tracking-level",
+  GLITCH_WOBBLE_LEVEL: "glitch-wobble-level",
+  GLITCH_HEADSWITCH_LEVEL: "glitch-headswitch-level",
+  GLITCH_RGB_LEVEL: "glitch-rgb-level",
+  GLITCH_DROPOUT_LEVEL: "glitch-dropout-level",
   SCANLINE: "scanline",
   VIGNETTE: "vignette",
-  CURVATURE: "curvature",
   GLOW: "glow",
 };
 
@@ -34,10 +38,14 @@ const SLIDER_RANGE = {
   [POPUP_IDS.SOUND_NOISE_LEVEL]: { min: 0, max: 1 },
   [POPUP_IDS.GLITCH_PHASE_LEVEL]: { min: 0, max: 1 },
   [POPUP_IDS.GLITCH_NOISE_LEVEL]: { min: 0, max: 1 },
+  [POPUP_IDS.GLITCH_TRACKING_LEVEL]: { min: 0, max: 1 },
+  [POPUP_IDS.GLITCH_WOBBLE_LEVEL]: { min: 0, max: 1 },
+  [POPUP_IDS.GLITCH_HEADSWITCH_LEVEL]: { min: 0, max: 1 },
+  [POPUP_IDS.GLITCH_RGB_LEVEL]: { min: 0, max: 1 },
+  [POPUP_IDS.GLITCH_DROPOUT_LEVEL]: { min: 0, max: 1 },
   [POPUP_IDS.SCANLINE]: { min: 0, max: 1 },
   [POPUP_IDS.VIGNETTE]: { min: 0, max: 1 },
-  [POPUP_IDS.CURVATURE]: { min: 0, max: 0.5 },
-  [POPUP_IDS.GLOW]: { min: 0, max: 0.4 },
+  [POPUP_IDS.GLOW]: { min: 0, max: 0.8 },
 };
 
 const FILL_IDS = {
@@ -45,21 +53,37 @@ const FILL_IDS = {
   [POPUP_IDS.SOUND_NOISE_LEVEL]: "sound-noise-fill",
   [POPUP_IDS.GLITCH_PHASE_LEVEL]: "glitch-phase-fill",
   [POPUP_IDS.GLITCH_NOISE_LEVEL]: "glitch-noise-fill",
+  [POPUP_IDS.GLITCH_TRACKING_LEVEL]: "glitch-tracking-fill",
+  [POPUP_IDS.GLITCH_WOBBLE_LEVEL]: "glitch-wobble-fill",
+  [POPUP_IDS.GLITCH_HEADSWITCH_LEVEL]: "glitch-headswitch-fill",
+  [POPUP_IDS.GLITCH_RGB_LEVEL]: "glitch-rgb-fill",
+  [POPUP_IDS.GLITCH_DROPOUT_LEVEL]: "glitch-dropout-fill",
   [POPUP_IDS.SCANLINE]: "scanline-fill",
   [POPUP_IDS.VIGNETTE]: "vignette-fill",
-  [POPUP_IDS.CURVATURE]: "curvature-fill",
   [POPUP_IDS.GLOW]: "glow-fill",
 };
+
+const SAVE_DEBOUNCE_MS = 80;
 
 class PopupController {
   constructor() {
     this._enabledEl = null;
+    this._saveDebounceTimer = null;
     this._sliderIdsByOption = {
       scanline: POPUP_IDS.SCANLINE,
       vignette: POPUP_IDS.VIGNETTE,
-      curvature: POPUP_IDS.CURVATURE,
       glow: POPUP_IDS.GLOW,
     };
+  }
+
+  /** Debounced save+broadcast for slider input; call saveAndBroadcast directly for toggles */
+  _debouncedSaveAndBroadcast() {
+    if (this._saveDebounceTimer != null) clearTimeout(this._saveDebounceTimer);
+    this._saveDebounceTimer = setTimeout(() => {
+      this._saveDebounceTimer = null;
+      const enabled = this._enabledEl?.checked ?? false;
+      this.saveAndBroadcast(enabled, this.getOptionsFromForm());
+    }, SAVE_DEBOUNCE_MS);
   }
 
   _getElement(id) {
@@ -88,8 +112,23 @@ class PopupController {
     const videoNoiseEl = this._getElement(POPUP_IDS.GLITCH_NOISE_LEVEL);
     options.glitchPhaseLevel = phaseEl ? parseFloat(phaseEl.value) : DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_PHASE_LEVEL];
     options.glitchNoiseLevel = videoNoiseEl ? parseFloat(videoNoiseEl.value) : DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_NOISE_LEVEL];
+    const trackingEl = this._getElement(POPUP_IDS.GLITCH_TRACKING_LEVEL);
+    const wobbleEl = this._getElement(POPUP_IDS.GLITCH_WOBBLE_LEVEL);
+    const headswitchEl = this._getElement(POPUP_IDS.GLITCH_HEADSWITCH_LEVEL);
+    options.glitchTrackingLevel = trackingEl ? parseFloat(trackingEl.value) : DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_TRACKING_LEVEL];
+    options.glitchWobbleLevel = wobbleEl ? parseFloat(wobbleEl.value) : DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_WOBBLE_LEVEL];
+    options.glitchHeadswitchLevel = headswitchEl ? parseFloat(headswitchEl.value) : DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_HEADSWITCH_LEVEL];
+    const rgbEl = this._getElement(POPUP_IDS.GLITCH_RGB_LEVEL);
+    const dropoutEl = this._getElement(POPUP_IDS.GLITCH_DROPOUT_LEVEL);
+    options.glitchRgbLevel = rgbEl ? parseFloat(rgbEl.value) : DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_RGB_LEVEL];
+    options.glitchDropoutLevel = dropoutEl ? parseFloat(dropoutEl.value) : DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_DROPOUT_LEVEL];
     if (Number.isNaN(options.glitchPhaseLevel)) options.glitchPhaseLevel = DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_PHASE_LEVEL];
     if (Number.isNaN(options.glitchNoiseLevel)) options.glitchNoiseLevel = DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_NOISE_LEVEL];
+    if (Number.isNaN(options.glitchTrackingLevel)) options.glitchTrackingLevel = DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_TRACKING_LEVEL];
+    if (Number.isNaN(options.glitchWobbleLevel)) options.glitchWobbleLevel = DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_WOBBLE_LEVEL];
+    if (Number.isNaN(options.glitchHeadswitchLevel)) options.glitchHeadswitchLevel = DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_HEADSWITCH_LEVEL];
+    if (Number.isNaN(options.glitchRgbLevel)) options.glitchRgbLevel = DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_RGB_LEVEL];
+    if (Number.isNaN(options.glitchDropoutLevel)) options.glitchDropoutLevel = DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_DROPOUT_LEVEL];
     return options;
   }
 
@@ -103,9 +142,13 @@ class PopupController {
       [STORAGE_KEYS.VHS_GLITCHES]: options.vhsGlitches ?? DEFAULT_OPTIONS[STORAGE_KEYS.VHS_GLITCHES],
       [STORAGE_KEYS.GLITCH_PHASE_LEVEL]: options.glitchPhaseLevel ?? DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_PHASE_LEVEL],
       [STORAGE_KEYS.GLITCH_NOISE_LEVEL]: options.glitchNoiseLevel ?? DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_NOISE_LEVEL],
+      [STORAGE_KEYS.GLITCH_TRACKING_LEVEL]: options.glitchTrackingLevel ?? DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_TRACKING_LEVEL],
+      [STORAGE_KEYS.GLITCH_WOBBLE_LEVEL]: options.glitchWobbleLevel ?? DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_WOBBLE_LEVEL],
+      [STORAGE_KEYS.GLITCH_HEADSWITCH_LEVEL]: options.glitchHeadswitchLevel ?? DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_HEADSWITCH_LEVEL],
+      [STORAGE_KEYS.GLITCH_RGB_LEVEL]: options.glitchRgbLevel ?? DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_RGB_LEVEL],
+      [STORAGE_KEYS.GLITCH_DROPOUT_LEVEL]: options.glitchDropoutLevel ?? DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_DROPOUT_LEVEL],
       [STORAGE_KEYS.SCANLINE]: options.scanline,
       [STORAGE_KEYS.VIGNETTE]: options.vignette,
-      [STORAGE_KEYS.CURVATURE]: options.curvature,
       [STORAGE_KEYS.GLOW]: options.glow,
     };
   }
@@ -123,6 +166,11 @@ class PopupController {
         vhsGlitches: payload[STORAGE_KEYS.VHS_GLITCHES],
         glitchPhaseLevel: payload[STORAGE_KEYS.GLITCH_PHASE_LEVEL],
         glitchNoiseLevel: payload[STORAGE_KEYS.GLITCH_NOISE_LEVEL],
+        glitchTrackingLevel: payload[STORAGE_KEYS.GLITCH_TRACKING_LEVEL],
+        glitchWobbleLevel: payload[STORAGE_KEYS.GLITCH_WOBBLE_LEVEL],
+        glitchHeadswitchLevel: payload[STORAGE_KEYS.GLITCH_HEADSWITCH_LEVEL],
+        glitchRgbLevel: payload[STORAGE_KEYS.GLITCH_RGB_LEVEL],
+        glitchDropoutLevel: payload[STORAGE_KEYS.GLITCH_DROPOUT_LEVEL],
       };
       tabs.sendToMessageableTabs(
         { type: MESSAGE.SET_OPTIONS, options: msgOptions, visible: enabled },
@@ -165,6 +213,16 @@ class PopupController {
       if (phaseEl && data[STORAGE_KEYS.GLITCH_PHASE_LEVEL] != null) phaseEl.value = data[STORAGE_KEYS.GLITCH_PHASE_LEVEL];
       const glitchNoiseEl = this._getElement(POPUP_IDS.GLITCH_NOISE_LEVEL);
       if (glitchNoiseEl && data[STORAGE_KEYS.GLITCH_NOISE_LEVEL] != null) glitchNoiseEl.value = data[STORAGE_KEYS.GLITCH_NOISE_LEVEL];
+      const trackingEl = this._getElement(POPUP_IDS.GLITCH_TRACKING_LEVEL);
+      if (trackingEl && data[STORAGE_KEYS.GLITCH_TRACKING_LEVEL] != null) trackingEl.value = data[STORAGE_KEYS.GLITCH_TRACKING_LEVEL];
+      const wobbleEl = this._getElement(POPUP_IDS.GLITCH_WOBBLE_LEVEL);
+      if (wobbleEl && data[STORAGE_KEYS.GLITCH_WOBBLE_LEVEL] != null) wobbleEl.value = data[STORAGE_KEYS.GLITCH_WOBBLE_LEVEL];
+      const headswitchEl = this._getElement(POPUP_IDS.GLITCH_HEADSWITCH_LEVEL);
+      if (headswitchEl && data[STORAGE_KEYS.GLITCH_HEADSWITCH_LEVEL] != null) headswitchEl.value = data[STORAGE_KEYS.GLITCH_HEADSWITCH_LEVEL];
+      const rgbEl = this._getElement(POPUP_IDS.GLITCH_RGB_LEVEL);
+      if (rgbEl && data[STORAGE_KEYS.GLITCH_RGB_LEVEL] != null) rgbEl.value = data[STORAGE_KEYS.GLITCH_RGB_LEVEL];
+      const dropoutEl = this._getElement(POPUP_IDS.GLITCH_DROPOUT_LEVEL);
+      if (dropoutEl && data[STORAGE_KEYS.GLITCH_DROPOUT_LEVEL] != null) dropoutEl.value = data[STORAGE_KEYS.GLITCH_DROPOUT_LEVEL];
 
       OPTION_SLIDER_KEYS.forEach((storageKey) => {
         const optionName = STORAGE_KEY_TO_OPTION[storageKey];
@@ -189,17 +247,25 @@ class PopupController {
     [POPUP_IDS.SOUND_EFFECT_LEVEL, POPUP_IDS.SOUND_NOISE_LEVEL].forEach((id) => {
       this._getElement(id)?.addEventListener("input", () => {
         this._updateTrackFills();
-        this.saveAndBroadcast(this._enabledEl?.checked ?? false, this.getOptionsFromForm());
+        this._debouncedSaveAndBroadcast();
       });
     });
     this._getElement(POPUP_IDS.VHS_GLITCHES)?.addEventListener("change", () => {
       this._updateStateLabels();
       this.saveAndBroadcast(this._enabledEl?.checked ?? false, this.getOptionsFromForm());
     });
-    [POPUP_IDS.GLITCH_PHASE_LEVEL, POPUP_IDS.GLITCH_NOISE_LEVEL].forEach((id) => {
+    [
+      POPUP_IDS.GLITCH_PHASE_LEVEL,
+      POPUP_IDS.GLITCH_NOISE_LEVEL,
+      POPUP_IDS.GLITCH_TRACKING_LEVEL,
+      POPUP_IDS.GLITCH_WOBBLE_LEVEL,
+      POPUP_IDS.GLITCH_HEADSWITCH_LEVEL,
+      POPUP_IDS.GLITCH_RGB_LEVEL,
+      POPUP_IDS.GLITCH_DROPOUT_LEVEL,
+    ].forEach((id) => {
       this._getElement(id)?.addEventListener("input", () => {
         this._updateTrackFills();
-        this.saveAndBroadcast(this._enabledEl?.checked ?? false, this.getOptionsFromForm());
+        this._debouncedSaveAndBroadcast();
       });
     });
 
@@ -207,8 +273,7 @@ class PopupController {
       const el = this._getElement(id);
       el?.addEventListener("input", () => {
         this._updateTrackFills();
-        const enabled = this._getElement(POPUP_IDS.ENABLED)?.checked ?? false;
-        this.saveAndBroadcast(enabled, this.getOptionsFromForm());
+        this._debouncedSaveAndBroadcast();
       });
     });
   }

@@ -1,24 +1,17 @@
 # CRT Monitor Overlay
 
-Chrome extension (Manifest V3) that applies a high-quality CRT-style overlay on all tabs and all sites. Uses `crt.png` as the extension icon. The overlay is purely visual—clicks, scroll, and keyboard pass through to the page.
+Chrome extension that draws a CRT-style overlay on every tab—scanlines, vignette, a bit of curvature and glow. The overlay is visual only; clicks and keyboard go to the page. Optional VHS-style audio for in-page video and audio (muffled highs, light hiss). Same-origin media only; embedded players like YouTube aren’t affected.
 
-## Features
+**Shortcut:** Ctrl+Shift+C (Windows/Linux) or Command+Shift+C (Mac) toggles the overlay.
 
-- **All tabs, all sites**: Runs on every URL. Toggle once and it applies everywhere (or use the shortcut).
-- **Effects**: Fine scanlines, vignette, curvature, and subtle glow. Adjust intensity in the popup.
-- **Non-intrusive**: Overlay uses `pointer-events: none` so the page stays fully interactive.
-- **Keyboard shortcut**: `Ctrl+Shift+C` (Windows/Linux) or `Command+Shift+C` (Mac) toggles the overlay.
-- **VHS sound filter**: Optional retro film audio (muffled highs + lo-fi hiss) for `<audio>` and `<video>` on the page. Only affects same-origin media (e.g. direct video/audio; not audio inside cross-origin iframes like YouTube embeds).
-
-## Build
+## Build and load
 
 ```bash
-cd crt-overlay
 npm install
 npm run build
 ```
 
-Load the extension in Chrome: open `chrome://extensions`, enable "Developer mode", click "Load unpacked", and select the `dist` folder.
+In Chrome open `chrome://extensions`, turn on Developer mode, choose “Load unpacked”, and pick the `dist` folder.
 
 ## Development
 
@@ -26,16 +19,12 @@ Load the extension in Chrome: open `chrome://extensions`, enable "Developer mode
 npm run dev
 ```
 
-Keep this running and reload the extension when you change code.
+Reload the extension when you change code.
 
-## Usage
+## Using it
 
-1. Click the extension icon to open the popup.
-2. Turn "Enable overlay" on. Use the sliders to adjust scanlines, vignette, curvature, and glow.
-3. Or use the keyboard shortcut to toggle without opening the popup.
+Open the popup from the toolbar, switch “Enable overlay” on, and tweak the sliders. Settings are stored locally and apply to all tabs. New tabs get the overlay if it’s already on.
 
-Settings are saved and apply to all tabs. New tabs will show the overlay if it was enabled.
+## Code note
 
-## Testing
-
-Storage and messaging are not dependency-injected; verification is by E2E or manual testing (load unpacked, use popup and shortcut). The shared `chrome-facade` (`src/shared/chrome-facade.js`) wraps `chrome.storage.local` and tab messaging so that future automated tests can mock this module. When adding more features or unit tests, inject the facade into popup/background/content instead of calling `chrome.*` directly.
+`src/shared/chrome-facade.js` wraps storage and tab messaging so you can mock it for tests. Prefer the facade over calling `chrome.*` directly in popup/background/content.
