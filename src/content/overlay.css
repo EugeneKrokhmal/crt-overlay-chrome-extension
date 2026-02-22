@@ -100,6 +100,75 @@ body.crt-body-wobble {
     inset 0 -2px 20px rgba(0, 255, 100, 0.02);
 }
 
+/* VHS RGB chromatic separation – three channels: R left, G center, B right (damaged tape look) */
+#crt-vhs-rgb-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+#crt-vhs-rgb-red,
+#crt-vhs-rgb-green,
+#crt-vhs-rgb-cyan {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: screen;
+  opacity: var(--crt-rgb-opacity, 0.5);
+}
+
+#crt-vhs-rgb-red {
+  background: rgba(255, 0, 50, 0.35);
+  transform: translateX(calc(var(--crt-rgb-px, 6) * -1px));
+}
+
+#crt-vhs-rgb-green {
+  background: rgba(0, 255, 80, 0.2);
+  transform: translateX(0);
+}
+
+#crt-vhs-rgb-cyan {
+  background: rgba(0, 160, 255, 0.35);
+  transform: translateX(calc(var(--crt-rgb-px, 6) * 1px));
+}
+
+/* VHS rewind texture – fast diagonal stripes (tape rewind / FF look); opacity from slider */
+#crt-vhs-rewind {
+  position: absolute;
+  inset: 0;
+  display: none;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: var(--crt-rewind, 0.4);
+}
+
+#crt-vhs-rewind::before {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  background: repeating-linear-gradient(
+    125deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.12) 2px,
+    rgba(0, 0, 0, 0.12) 4px,
+    transparent 4px,
+    transparent 6px,
+    rgba(255, 255, 255, 0.03) 6px,
+    rgba(255, 255, 255, 0.03) 8px
+  );
+  background-size: 24px 24px;
+  animation: crt-rewind-scroll 0.4s linear infinite;
+}
+
+@keyframes crt-rewind-scroll {
+  0% { transform: translateY(0) translateX(0); }
+  100% { transform: translateY(24px) translateX(9px); }
+}
+
 /* VHS glitches: phase (color fringing / chroma shift) – only visible when data-glitches */
 #crt-glitch-phase {
   position: absolute;
@@ -206,7 +275,7 @@ body.crt-body-wobble {
   width: 100%;
   height: 100%;
   object-fit: fill;
-  image-rendering: pixelated;
+  image-rendering: crisp-edges;
   opacity: var(--crt-glitch-noise, 0.15);
   transform: translateZ(0);
 }
