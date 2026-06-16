@@ -58,6 +58,11 @@ export class VHSSoundFilter {
     this._noiseLevel = 0.6;
     this._overdriveLevel = 0;
     this._chorusLevel = 0;
+    this._mono = false;
+    this._wowFlutterLevel = 0;
+    // Shared LFO nodes (one per context; null until first chain is created)
+    this._wowLfoGain = null;
+    this._flutterLfoGain = null;
     this._chorusDelays = new Set();
     this._chorusRafId = null;
     this._nodesByElement = new WeakMap();
@@ -99,7 +104,29 @@ export class VHSSoundFilter {
     document.addEventListener("keydown", once, { passive: true });
   }
 
+  _ensureWowLfo(ctx) {
+    if (this._wowLfoGain) return;
+    const depth = this._wowFlutterLevel;
+    // Wow — very slow pitch modulation (~0.4 Hz)
+    const wowOsc = ctx.createOscillator();
+    wowOsc.type = "sine";
+    wowOsc.frequency.value = 0.4;
+    this._wowLfoGain = ctx.createGain();
+    this._wowLfoGain.gain.value = depth * 0.003;
+    wowOsc.connect(this._wowLfoGain);
+    wowOsc.start();
+    // Flutter — faster pitch modulation (~5.7 Hz)
+    const flutterOsc = ctx.createOscillator();
+    flutterOsc.type = "sine";
+    flutterOsc.frequency.value = 5.7;
+    this._flutterLfoGain = ctx.createGain();
+    this._flutterLfoGain.gain.value = depth * 0.0006;
+    flutterOsc.connect(this._flutterLfoGain);
+    flutterOsc.start();
+  }
+
   _createChain(ctx, source) {
+    this._ensureWowLfo(ctx);
     const dryGain = ctx.createGain();
     const lowpass = ctx.createBiquadFilter();
     lowpass.type = "lowpass";
@@ -129,14 +156,28 @@ const noiseBuffer = createTapeNoiseBuffer(ctx);
     const noiseGain = ctx.createGain();
     noiseGain.gain.value = this._noiseLevel * NOISE_GAIN_MAX;
 
+    // Mono downmix node: channelCount=1 causes browser to downmix stereo→mono,
+    // and the stereo destination upmixes mono→both channels.
+    const monoGain = ctx.createGain();
+    monoGain.gain.value = 1;
+
     source.connect(dryGain);
-    dryGain.connect(ctx.destination);
+    dryGain.connect(monoGain);
     source.connect(lowpass);
     lowpass.connect(waveshaper);
     waveshaper.connect(effectGain);
-    effectGain.connect(ctx.destination);
+    effectGain.connect(monoGain);
     noiseSource.connect(noiseGain);
-    noiseGain.connect(ctx.destination);
+    noiseGain.connect(monoGain);
+    // Wow/flutter — per-chain DelayNode modulated by shared LFO
+    const wowDelay = ctx.createDelay(0.05);
+    wowDelay.delayTime.value = 0.015;
+    if (this._wowLfoGain) this._wowLfoGain.connect(wowDelay.delayTime);
+    if (this._flutterLfoGain) this._flutterLfoGain.connect(wowDelay.delayTime);
+    monoGain.connect(wowDelay);
+    wowDelay.connect(ctx.destination);
+
+    this._applyMonoToNode(monoGain);
 
     try {
       noiseSource.start(0);
@@ -144,7 +185,28 @@ const noiseBuffer = createTapeNoiseBuffer(ctx);
       logExtensionWarning("VHS sound: noise source start failed", err);
     }
 
-    return { dryGain, effectGain, noiseGain, waveshaper, chorusGain };
+    return { dryGain, effectGain, noiseGain, waveshaper, chorusGain, monoGain };
+  }
+
+  _applyMonoToNode(node) {
+    if (!node) return;
+    if (this._mono) {
+      node.channelCount = 1;
+      node.channelCountMode = "explicit";
+      node.channelInterpretation = "speakers";
+    } else {
+      node.channelCount = 2;
+      node.channelCountMode = "max";
+      node.channelInterpretation = "speakers";
+    }
+  }
+
+  setMono(mono) {
+    this._mono = !!mono;
+    document.querySelectorAll("audio, video").forEach((el) => {
+      const chain = this._nodesByElement.get(el);
+      if (chain?.monoGain) this._applyMonoToNode(chain.monoGain);
+    });
   }
 
   _chorusLfoTick() {
@@ -203,16 +265,27 @@ const noiseBuffer = createTapeNoiseBuffer(ctx);
     else if (this._chorusLevel <= 0) this._stopChorusLfo();
   }
 
+  _applyWowFlutter(level) {
+    this._wowFlutterLevel = Math.max(0, Math.min(1, Number(level) || 0));
+    if (this._wowLfoGain) this._wowLfoGain.gain.value = this._wowFlutterLevel * 0.003;
+    if (this._flutterLfoGain) this._flutterLfoGain.gain.value = this._wowFlutterLevel * 0.0006;
+  }
+
   /** Update effect/noise/overdrive/chorus levels (0–1) and apply to all hooked chains */
-  setLevels(effectLevel, noiseLevel, overdriveLevel, chorusLevel) {
+  setLevels(effectLevel, noiseLevel, overdriveLevel, chorusLevel, mono, wowFlutter) {
     this._effectLevel = Math.max(0, Math.min(1, Number(effectLevel) || 0));
     this._noiseLevel = Math.max(0, Math.min(1, Number(noiseLevel) || 0));
     this._overdriveLevel = Math.max(0, Math.min(1, Number(overdriveLevel) ?? 0));
     this._chorusLevel = Math.max(0, Math.min(1, Number(chorusLevel) ?? 0));
+    if (mono !== undefined) this._mono = !!mono;
+    if (wowFlutter !== undefined) this._applyWowFlutter(wowFlutter);
     if (this._chorusLevel <= 0) this._stopChorusLfo();
     document.querySelectorAll("audio, video").forEach((el) => {
       const chain = this._nodesByElement.get(el);
-      if (chain) this._setChainEnabled(chain, this._enabled);
+      if (chain) {
+        this._setChainEnabled(chain, this._enabled);
+        this._applyMonoToNode(chain.monoGain);
+      }
     });
   }
 
@@ -221,12 +294,14 @@ const noiseBuffer = createTapeNoiseBuffer(ctx);
     list.forEach((el) => this._hookElement(el));
   }
 
-  setEnabled(enabled, effectLevel, noiseLevel, overdriveLevel, chorusLevel) {
+  setEnabled(enabled, effectLevel, noiseLevel, overdriveLevel, chorusLevel, mono, wowFlutter) {
     if (enabled !== undefined) this._enabled = !!enabled;
     if (effectLevel !== undefined) this._effectLevel = Math.max(0, Math.min(1, Number(effectLevel) || 0));
     if (noiseLevel !== undefined) this._noiseLevel = Math.max(0, Math.min(1, Number(noiseLevel) || 0));
     if (overdriveLevel !== undefined) this._overdriveLevel = Math.max(0, Math.min(1, Number(overdriveLevel) ?? 0));
     if (chorusLevel !== undefined) this._chorusLevel = Math.max(0, Math.min(1, Number(chorusLevel) ?? 0));
+    if (mono !== undefined) this._mono = !!mono;
+    if (wowFlutter !== undefined) this._applyWowFlutter(wowFlutter);
     if (!this._enabled || this._chorusLevel <= 0) this._stopChorusLfo();
     if (this._enabled) {
       this._ensureContextRunning().then(() => {
