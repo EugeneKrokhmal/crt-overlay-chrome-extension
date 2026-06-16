@@ -31,46 +31,49 @@
 
   <section>
     <h2>What it does</h2>
-    <p>It puts a retro CRT look on any page: scanlines, dark edges, slight curve, and an optional VHS-style sound on in-page video and audio. The overlay doesn’t capture clicks or keys—the page works as usual. Turn it on or off from the popup or with Ctrl+Shift+C (Command+Shift+C on Mac). Sliders control how strong each effect is. Everything is saved on your machine and applied across tabs.</p>
+    <p>It puts a retro CRT look on any page: scanlines, dark edges, glow, phosphor tint, and optional VHS-style glitches and audio on in-page video and audio. The overlay does not capture clicks or keys—the page works as usual. Turn it on or off from the side panel or with Ctrl+Shift+C (Command+Shift+C on Mac). Sliders control each effect. You can save named presets. Everything is stored on your device and applied across tabs.</p>
   </section>
 
   <section>
     <h2>How to use</h2>
     <ol>
-      <li>Click the extension icon to open the popup.</li>
+      <li>Click the extension icon to open the settings side panel.</li>
       <li>Turn “Enable overlay” on and adjust the sliders if you like.</li>
-      <li>Optionally turn on “VHS sound” and “VHS glitches.”</li>
-      <li>Use the shortcut to toggle the overlay without opening the popup.</li>
+      <li>Optionally turn on VHS audio and VHS glitches.</li>
+      <li>Save presets to recall your favorite looks.</li>
+      <li>Use the keyboard shortcut to toggle the overlay without opening the panel.</li>
     </ol>
   </section>
 
   <section>
     <h2>Privacy</h2>
-    <p>CRT Monitor Overlay does not collect or send any of your data. No analytics, no accounts, no server.</p>
-    <p>Your choices (overlay on/off, slider positions, VHS options) are stored only in Chrome’s local storage on your device. The VHS audio is processed in the browser and never recorded or uploaded. This applies to the extension as distributed on the Chrome Web Store; other sources may differ.</p>
+    <p>CRT Monitor Overlay does not collect, transmit, or sell any of your data. No analytics, no accounts, no remote servers.</p>
+    <p>Your choices (overlay on/off, slider values, presets, VHS options) are stored only in Chrome’s local storage on your device. VHS audio is processed in the browser via the Web Audio API and is never recorded or uploaded. The extension does not read page text, passwords, form fields, cookies, or browsing history.</p>
+    <p>This policy applies to the extension as distributed on the Chrome Web Store.</p>
   </section>
 
   <section>
     <h2>Why these permissions</h2>
     <ul>
-      <li><strong>Storage</strong> — Saves your settings on your device so they persist and apply to all tabs.</li>
-      <li><strong>Active tab</strong> — Lets the popup know which tab you’re on so it can work correctly.</li>
-      <li><strong>Tabs</strong> — Applies your overlay and settings to every tab and keeps new tabs in sync.</li>
+      <li><strong>Storage</strong> — Saves your settings and presets on your device.</li>
+      <li><strong>Tabs</strong> — Sends your settings to open tabs so the overlay stays in sync when you change options.</li>
+      <li><strong>Side panel</strong> — Opens the settings panel when you click the extension icon.</li>
+      <li><strong>Access to websites</strong> — Injects a visual overlay and optional audio processing only when you enable the extension. The content script does not exfiltrate page data.</li>
     </ul>
-    <p>Nothing here is used to read history, track you, or send data off your device.</p>
+    <p>Permissions are used only for the features above and not for tracking or advertising.</p>
   </section>
 
   <section>
     <h2>FAQ</h2>
-    <p><strong>Every site?</strong> The overlay can run on any page. VHS sound only affects &lt;audio&gt; and &lt;video&gt; the page loads directly; embedded iframes (e.g. many YouTube embeds) are out of scope because of browser security.</p>
-    <p><strong>Turn it off?</strong> Use the popup or the same shortcut; your last state is remembered.</p>
-    <p><strong>Source?</strong> The code is available on GitHub; the store listing or this page may link to it.</p>
+    <p><strong>Every site?</strong> The overlay can run on any normal web page. VHS sound only affects &lt;audio&gt; and &lt;video&gt; elements the page loads directly; embedded iframes (e.g. many YouTube embeds) are out of scope because of browser security.</p>
+    <p><strong>Turn it off?</strong> Use the side panel or the keyboard shortcut; your last state is remembered.</p>
+    <p><strong>Source code?</strong> <a href="https://github.com/EugeneKrokhmal/crt-overlay-chrome-extension">GitHub repository</a></p>
   </section>
 
   <section>
     <h2>Contact</h2>
-    <p>If you installed from the Chrome Web Store, use the Support link on the listing or the contact given there. If you have the repo, open an issue there.</p>
-    <p class="muted">2026 · extension v0.1.0</p>
+    <p>For Chrome Web Store installs, use the Support link on the listing or open an issue on <a href="https://github.com/EugeneKrokhmal/crt-overlay-chrome-extension/issues">GitHub</a>.</p>
+    <p class="muted">Last updated 2026 · extension v0.1.2</p>
   </section>
 </body>
 </html>

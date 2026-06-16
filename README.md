@@ -11,7 +11,15 @@ npm install
 npm run build
 ```
 
-In Chrome open `chrome://extensions`, turn on Developer mode, choose “Load unpacked”, and pick the `dist` folder.
+In Chrome open `chrome://extensions`, turn on Developer mode, choose “Load unpacked”, and pick the `dist` folder. Requires Chrome 114+ (side panel API).
+
+## Publish to Chrome Web Store
+
+```bash
+npm run package
+```
+
+Creates `crt-overlay-chrome-extension-<version>.zip` for the Chrome Web Store. See `docs/PUBLISHING.md` and `docs/STORE_DESCRIPTION.md`.
 
 ## Development
 
@@ -23,7 +31,7 @@ Reload the extension when you change code.
 
 ## Using it
 
-Open the popup from the toolbar, switch “Enable overlay” on, and tweak the sliders. Settings are stored locally and apply to all tabs. New tabs get the overlay if it’s already on.
+Click the toolbar icon to open the side panel, switch “Enable overlay” on, and tweak the sliders. Save presets for quick recall. Settings are stored locally and apply to all tabs. New tabs get the overlay if it’s already on.
 
 ## Code note
 
