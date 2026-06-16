@@ -5,6 +5,7 @@ node_modules/
 dist/
 *.crx
 *.xpi
+crt-overlay-chrome-extension*.zip
 
 # OS
 .DS_Store
