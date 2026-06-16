@@ -17,12 +17,60 @@ const CURVE_INNER_SELECTOR = "#crt-curve-inner";
 export class CRTOverlay {
   constructor() {
     this._root = null;
+    this._lastOptions = {};
+    this._tapeCounterValue = 0;
+    this._lastCounterSecond = -1;
+    // JS-loop handles
+    this._flickerRaf = null;
+    this._flickerActive = false;
+    this._signalBandsRaf = null;
+    this._signalBandsActive = false;
+    this._hudInterval = null;
+    this._hudOpts = {};
+    this._signalBands = [];
+  }
+
+  _ensureSharpenFilter() {
+    if (document.getElementById("crt-sharpen-defs")) return;
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.id = "crt-sharpen-defs";
+    svg.setAttribute("aria-hidden", "true");
+    svg.style.cssText = "position:absolute;width:0;height:0;overflow:hidden;pointer-events:none";
+    svg.innerHTML = `<defs><filter id="crt-sharpen" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="0.6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="arithmetic" k1="0" k2="1" k3="0" k4="0" result="sharp"/>
+    </filter></defs>`;
+    (document.head || document.documentElement).appendChild(svg);
+    this._sharpenFilter = svg.querySelector("feComposite");
+  }
+
+  _applyPageFilters(options) {
+    this._ensureSharpenFilter();
+    const sat = options.filterSaturation ?? DEFAULT_OPTIONS[STORAGE_KEYS.FILTER_SATURATION] ?? 1;
+    const con = options.filterContrast ?? DEFAULT_OPTIONS[STORAGE_KEYS.FILTER_CONTRAST] ?? 1;
+    const sharp = options.filterSharpness ?? DEFAULT_OPTIONS[STORAGE_KEYS.FILTER_SHARPNESS] ?? 0;
+    const hue = options.filterHue ?? DEFAULT_OPTIONS[STORAGE_KEYS.FILTER_HUE] ?? 0;
+
+    if (this._sharpenFilter) {
+      const k2 = 1 + sharp;
+      const k3 = -sharp;
+      this._sharpenFilter.setAttribute("k2", String(k2));
+      this._sharpenFilter.setAttribute("k3", String(k3));
+    }
+
+    const parts = [];
+    if (sharp > 0.01) parts.push("url(#crt-sharpen)");
+    if (Math.abs(sat - 1) > 0.01) parts.push(`saturate(${sat.toFixed(3)})`);
+    if (Math.abs(con - 1) > 0.01) parts.push(`contrast(${con.toFixed(3)})`);
+    if (hue > 0.5) parts.push(`hue-rotate(${Math.round(hue)}deg)`);
+
+    document.body.style.filter = parts.length ? parts.join(" ") : "";
   }
 
   getRoot() {
     if (this._root) return this._root;
     this._root = this._createDOM();
-    document.body.appendChild(this._root);
+    document.documentElement.appendChild(this._root);
     this._resizeOverlay();
     this._resizeObserver = new ResizeObserver(() => this._resizeOverlay());
     this._resizeObserver.observe(document.documentElement);
@@ -84,8 +132,22 @@ export class CRTOverlay {
     dropoutWrap.appendChild(dropoutCanvas);
     curveInner.appendChild(dropoutWrap);
 
+    const interlaceLayer = document.createElement("div");
+    interlaceLayer.id = "crt-interlace-layer";
+    curveInner.appendChild(interlaceLayer);
+
+    const signalBandsCanvas = document.createElement("canvas");
+    signalBandsCanvas.id = "crt-signal-bands";
+    curveInner.appendChild(signalBandsCanvas);
+
     curveWrap.appendChild(curveInner);
     root.appendChild(curveWrap);
+
+    // Flicker layer lives outside curve-wrap; not subject to any curve distortion
+    const flickerLayer = document.createElement("div");
+    flickerLayer.id = "crt-flicker-layer";
+    root.appendChild(flickerLayer);
+
     return root;
   }
 
@@ -99,6 +161,8 @@ export class CRTOverlay {
   }
 
   applyOptions(options = {}) {
+    this._lastOptions = options;
+    this._applyPageFilters(options);
     const root = this.getRoot();
     const inner = root.querySelector(CURVE_INNER_SELECTOR);
     if (!inner) return;
@@ -114,6 +178,10 @@ export class CRTOverlay {
     inner.style.setProperty(
       "--crt-glow",
       String(options.glow ?? DEFAULT_OPTIONS[STORAGE_KEYS.GLOW])
+    );
+    inner.style.setProperty(
+      "--crt-phosphor",
+      String(options.phosphor ?? DEFAULT_OPTIONS[STORAGE_KEYS.PHOSPHOR])
     );
 
     const glitches = options.vhsGlitches ?? DEFAULT_OPTIONS[STORAGE_KEYS.VHS_GLITCHES];
@@ -159,6 +227,24 @@ export class CRTOverlay {
       this._applyRgbFilter(0);
       document.body.classList.remove("crt-body-wobble");
       document.body.style.removeProperty("--crt-wobble-px");
+    }
+
+    // New visual effects — update regardless of glitches state
+    this._applyInterlace(!!options.interlace);
+    const visible = root.hasAttribute("data-visible");
+    const fi = options.flickerIntensity ?? 0;
+    if (fi > 0 && visible) {
+      this._startFlicker(fi);
+    } else if (fi <= 0) {
+      this._stopFlicker();
+    }
+    if (options.signalBands && visible) {
+      this._startSignalBands();
+    } else if (!options.signalBands) {
+      this._stopSignalBands();
+    }
+    if (visible) {
+      this._startHUD({ vhsTimestamp: !!options.vhsTimestamp, tapeCounter: !!options.tapeCounter });
     }
   }
 
@@ -284,8 +370,285 @@ export class CRTOverlay {
     this._dropoutCanvas = null;
   }
 
+  // ── Flicker ──────────────────────────────────────────────────────────────
+
+  _startFlicker(intensity) {
+    this._stopFlicker();
+    if (!intensity || intensity <= 0) return;
+    const layer = this._root?.querySelector("#crt-flicker-layer");
+    if (!layer) return;
+    this._flickerActive = true;
+    const tick = () => {
+      if (!this._flickerActive) return;
+      const r = Math.random();
+      let alpha = 0;
+      if (r < 0.012 * intensity) {
+        alpha = 0.25 + Math.random() * 0.25 * intensity; // occasional deep dip
+      } else if (r < 0.055 * intensity) {
+        alpha = 0.04 + Math.random() * 0.08 * intensity; // subtle shimmer
+      }
+      layer.style.opacity = String(alpha);
+      this._flickerRaf = requestAnimationFrame(tick);
+    };
+    tick();
+  }
+
+  _stopFlicker() {
+    this._flickerActive = false;
+    if (this._flickerRaf != null) {
+      cancelAnimationFrame(this._flickerRaf);
+      this._flickerRaf = null;
+    }
+    const layer = this._root?.querySelector("#crt-flicker-layer");
+    if (layer) layer.style.opacity = "0";
+  }
+
+  // ── Interlace ─────────────────────────────────────────────────────────────
+
+  _applyInterlace(enabled) {
+    const root = this.getRoot();
+    if (enabled) root.setAttribute("data-interlace", "true");
+    else root.removeAttribute("data-interlace");
+  }
+
+  // ── Signal bands ──────────────────────────────────────────────────────────
+
+  _startSignalBands() {
+    this._stopSignalBands();
+    const canvas = this._root?.querySelector("#crt-signal-bands");
+    if (!canvas) return;
+    canvas.style.display = "block";
+
+    this._signalBands = Array.from({ length: 4 }, () => ({
+      y: Math.random(),
+      speed: 0.00015 + Math.random() * 0.00025,
+      h: 0.04 + Math.random() * 0.06,
+      alpha: 0.07 + Math.random() * 0.10,
+      bright: Math.random() > 0.4,
+    }));
+
+    this._signalBandsActive = true;
+    const draw = () => {
+      if (!this._signalBandsActive) return;
+      const W = canvas.offsetWidth || 320;
+      const H = canvas.offsetHeight || 240;
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, W, H);
+      for (const b of this._signalBands) {
+        b.y -= b.speed;
+        if (b.y + b.h < 0) b.y = 1 + b.h;
+        const yPx = b.y * H;
+        const hPx = b.h * H;
+        const c = b.bright
+          ? `rgba(255,255,255,${b.alpha})`
+          : `rgba(0,0,0,${b.alpha * 2})`;
+        const grad = ctx.createLinearGradient(0, yPx, 0, yPx + hPx);
+        grad.addColorStop(0, "transparent");
+        grad.addColorStop(0.2, c);
+        grad.addColorStop(0.8, c);
+        grad.addColorStop(1, "transparent");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, yPx, W, hPx);
+      }
+      this._signalBandsRaf = requestAnimationFrame(draw);
+    };
+    draw();
+  }
+
+  _stopSignalBands() {
+    this._signalBandsActive = false;
+    if (this._signalBandsRaf != null) {
+      cancelAnimationFrame(this._signalBandsRaf);
+      this._signalBandsRaf = null;
+    }
+    const canvas = this._root?.querySelector("#crt-signal-bands");
+    if (canvas) canvas.style.display = "none";
+  }
+
+  // ── VHS HUD (timestamp + tape counter) ───────────────────────────────────
+
+  _getOrCreateHudCanvas() {
+    if (!this._hudCanvasEl) {
+      const canvas = document.createElement("canvas");
+      canvas.id = "crt-hud-canvas";
+      canvas.style.cssText = [
+        "position:fixed",
+        "inset:0",
+        "z-index:2147483645",
+        "pointer-events:none",
+        "display:none",
+      ].join(";");
+      document.documentElement.appendChild(canvas);
+      this._hudCanvasEl = canvas;
+    }
+    return this._hudCanvasEl;
+  }
+
+  _startHUD(opts) {
+    this._stopHUD();
+    this._hudOpts = opts;
+    if (!opts.vhsTimestamp && !opts.tapeCounter) return;
+    const canvas = this._getOrCreateHudCanvas();
+    canvas.style.display = "block";
+    const draw = () => this._drawHUDFrame(canvas);
+    draw();
+    this._hudInterval = setInterval(draw, 250);
+  }
+
+  _drawHUDFrame(canvas) {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    if (canvas.width !== W) canvas.width = W;
+    if (canvas.height !== H) canvas.height = H;
+
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, W, H);
+
+    const PAD = 20;
+    const FONT = "bold 20px 'Courier New', Courier, monospace";
+    ctx.font = FONT;
+
+    const now = new Date();
+    const blink = Date.now() % 1000 < 500;
+    const hh24 = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const ss = String(now.getSeconds()).padStart(2, "0");
+    const hours12 = now.getHours() % 12 || 12;
+    const ampm = now.getHours() < 12 ? "AM" : "PM";
+    const MONTHS = ["Jan.","Feb.","Mar.","Apr.","May ","Jun.","Jul.","Aug.","Sep.","Oct.","Nov.","Dec."];
+
+    // shared shadow
+    const setShadow = (color = "rgba(0,0,0,0.85)", blur = 5) => {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = blur;
+      ctx.shadowOffsetX = 1;
+      ctx.shadowOffsetY = 1;
+    };
+
+    if (this._hudOpts.vhsTimestamp) {
+      ctx.textBaseline = "top";
+      setShadow();
+
+      // ── TOP-LEFT: REC + blinking dot ─────────────────────────────────────
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText("REC", PAD, PAD);
+      const recW = ctx.measureText("REC ").width;
+      if (blink) {
+        const cx = PAD + recW + 5;
+        const cy = PAD + 10;
+        setShadow("rgba(220,0,0,0.7)", 10);
+        ctx.fillStyle = "#ff2222";
+        ctx.beginPath();
+        ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+        ctx.fill();
+        setShadow();
+      }
+
+      // ── TOP-RIGHT: HH:MM:SS ───────────────────────────────────────────────
+      const timeStr = `${hh24}:${mm}:${ss}`;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(timeStr, W - PAD - ctx.measureText(timeStr).width, PAD);
+
+      // ── BOTTOM-RIGHT: AM/PM HH:MM  +  Date ───────────────────────────────
+      ctx.textBaseline = "bottom";
+      const ampmStr = `${ampm} ${String(hours12).padStart(2, "0")}:${mm}`;
+      const dateStr = `${MONTHS[now.getMonth()]} ${String(now.getDate()).padStart(2, "0")} ${now.getFullYear()}`;
+      const ampmW = ctx.measureText(ampmStr).width;
+      const dateW = ctx.measureText(dateStr).width;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(ampmStr, W - PAD - ampmW, H - PAD - 28);
+      ctx.fillText(dateStr, W - PAD - dateW, H - PAD);
+    }
+
+    // ── BOTTOM-LEFT: tape counter ─────────────────────────────────────────
+    if (this._hudOpts.tapeCounter) {
+      const sec = now.getSeconds();
+      if (sec !== this._lastCounterSecond) {
+        this._lastCounterSecond = sec;
+        this._tapeCounterValue++;
+      }
+      setShadow();
+      ctx.textBaseline = "bottom";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(`C ${String(this._tapeCounterValue).padStart(5, "0")}`, PAD, H - PAD);
+    }
+  }
+
+  _stopHUD() {
+    if (this._hudInterval != null) {
+      clearInterval(this._hudInterval);
+      this._hudInterval = null;
+    }
+    if (this._hudCanvasEl) this._hudCanvasEl.style.display = "none";
+  }
+
+  // ── Channel static (on SPA navigation) ───────────────────────────────────
+
+  flashChannelStatic() {
+    const canvas = document.createElement("canvas");
+    canvas.style.cssText = "position:fixed;inset:0;width:100%;height:100%;z-index:2147483647;pointer-events:none;image-rendering:pixelated;";
+    document.documentElement.appendChild(canvas);
+    const scale = 4;
+    const W = canvas.width = Math.ceil(window.innerWidth / scale);
+    const H = canvas.height = Math.ceil(window.innerHeight / scale);
+    const ctx = canvas.getContext("2d");
+    let raf;
+    const drawNoise = () => {
+      const img = ctx.createImageData(W, H);
+      const d = img.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const v = (Math.random() * 255) | 0;
+        d[i] = d[i + 1] = d[i + 2] = v;
+        d[i + 3] = 255;
+      }
+      ctx.putImageData(img, 0, 0);
+      raf = requestAnimationFrame(drawNoise);
+    };
+    drawNoise();
+    setTimeout(() => {
+      cancelAnimationFrame(raf);
+      canvas.style.transition = "opacity 180ms";
+      canvas.style.opacity = "0";
+      setTimeout(() => canvas.remove(), 180);
+    }, 280);
+  }
+
+  // ── Keyboard shortcut on-page indicator ──────────────────────────────────
+
+  showToggleIndicator(visible) {
+    const existing = document.getElementById("crt-toggle-indicator");
+    if (existing) existing.remove();
+    const el = document.createElement("div");
+    el.id = "crt-toggle-indicator";
+    el.textContent = visible ? "CRT  ON" : "CRT  OFF";
+    el.style.cssText = [
+      "position:fixed",
+      "top:18px",
+      "left:50%",
+      "transform:translateX(-50%)",
+      "background:rgba(0,0,0,0.78)",
+      "color:" + (visible ? "#90ff70" : "#ff7070"),
+      "font:bold 13px 'Courier New',monospace",
+      "letter-spacing:0.12em",
+      "padding:5px 14px 5px 14px",
+      "border-radius:4px",
+      "z-index:2147483647",
+      "pointer-events:none",
+      "opacity:1",
+      "transition:opacity 0.45s",
+    ].join(";");
+    document.documentElement.appendChild(el);
+    setTimeout(() => {
+      el.style.opacity = "0";
+      setTimeout(() => el.remove(), 450);
+    }, 1600);
+  }
+
   setVisible(visible) {
     const root = this.getRoot();
+    const opts = this._lastOptions;
     if (visible) {
       root.setAttribute("data-visible", "true");
       if (root.hasAttribute("data-glitches")) {
@@ -296,10 +659,17 @@ export class CRTOverlay {
           document.body.style.setProperty("--crt-wobble-px", wobblePx);
         }
       }
+      const fi = opts.flickerIntensity ?? 0;
+      if (fi > 0) this._startFlicker(fi);
+      if (opts.signalBands) this._startSignalBands();
+      this._startHUD({ vhsTimestamp: !!opts.vhsTimestamp, tapeCounter: !!opts.tapeCounter });
     } else {
       root.removeAttribute("data-visible");
       this._stopNoiseCanvas();
       this._stopDropoutCanvas();
+      this._stopFlicker();
+      this._stopSignalBands();
+      this._stopHUD();
       document.body.classList.remove("crt-body-wobble");
       document.body.style.removeProperty("--crt-wobble-px");
     }
@@ -320,6 +690,15 @@ export class CRTOverlay {
     options.glitchRgbLevel = data[STORAGE_KEYS.GLITCH_RGB_LEVEL] ?? DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_RGB_LEVEL];
     options.glitchDropoutLevel = data[STORAGE_KEYS.GLITCH_DROPOUT_LEVEL] ?? DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_DROPOUT_LEVEL];
     options.glitchRewindLevel = data[STORAGE_KEYS.GLITCH_REWIND_LEVEL] ?? DEFAULT_OPTIONS[STORAGE_KEYS.GLITCH_REWIND_LEVEL];
+    options.filterSaturation = data[STORAGE_KEYS.FILTER_SATURATION] ?? DEFAULT_OPTIONS[STORAGE_KEYS.FILTER_SATURATION];
+    options.filterContrast = data[STORAGE_KEYS.FILTER_CONTRAST] ?? DEFAULT_OPTIONS[STORAGE_KEYS.FILTER_CONTRAST];
+    options.filterSharpness = data[STORAGE_KEYS.FILTER_SHARPNESS] ?? DEFAULT_OPTIONS[STORAGE_KEYS.FILTER_SHARPNESS];
+    options.filterHue = data[STORAGE_KEYS.FILTER_HUE] ?? DEFAULT_OPTIONS[STORAGE_KEYS.FILTER_HUE];
+    options.flickerIntensity = data[STORAGE_KEYS.FLICKER_INTENSITY] ?? DEFAULT_OPTIONS[STORAGE_KEYS.FLICKER_INTENSITY];
+    options.interlace = data[STORAGE_KEYS.INTERLACE] ?? DEFAULT_OPTIONS[STORAGE_KEYS.INTERLACE];
+    options.signalBands = data[STORAGE_KEYS.SIGNAL_BANDS] ?? DEFAULT_OPTIONS[STORAGE_KEYS.SIGNAL_BANDS];
+    options.vhsTimestamp = data[STORAGE_KEYS.VHS_TIMESTAMP] ?? DEFAULT_OPTIONS[STORAGE_KEYS.VHS_TIMESTAMP];
+    options.tapeCounter = data[STORAGE_KEYS.TAPE_COUNTER] ?? DEFAULT_OPTIONS[STORAGE_KEYS.TAPE_COUNTER];
     this.getRoot();
     this.applyOptions(options);
     if (data[STORAGE_KEYS.ENABLED]) {

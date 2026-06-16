@@ -90,14 +90,15 @@ body.crt-body-wobble {
   opacity: 1;
 }
 
-/* Optional chromatic edge glow */
+/* Phosphor chromatic edge glow */
 #crt-chromatic {
   position: absolute;
   inset: 0;
-  box-shadow: inset 2px 0 20px rgba(255, 0, 0, 0.03),
-    inset -2px 0 20px rgba(0, 200, 255, 0.03),
-    inset 0 2px 20px rgba(255, 255, 0, 0.02),
-    inset 0 -2px 20px rgba(0, 255, 100, 0.02);
+  opacity: var(--crt-phosphor, 0.4);
+  box-shadow: inset 2px 0 20px rgba(255, 0, 0, 0.08),
+    inset -2px 0 20px rgba(0, 200, 255, 0.08),
+    inset 0 2px 20px rgba(255, 255, 0, 0.05),
+    inset 0 -2px 20px rgba(0, 255, 100, 0.05);
 }
 
 /* VHS RGB chromatic separation – three channels: R left, G center, B right (damaged tape look) */
@@ -278,6 +279,51 @@ body.crt-body-wobble {
   image-rendering: crisp-edges;
   opacity: var(--crt-glitch-noise, 0.15);
   transform: translateZ(0);
+}
+
+/* Flicker – full-screen dimming layer (outside curve-wrap, JS drives opacity) */
+#crt-flicker-layer {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Interlace – alternating row shift, CSS animation drives 1px field offset */
+#crt-interlace-layer {
+  position: absolute;
+  inset: 0;
+  display: none;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.10) 0px,
+    rgba(0, 0, 0, 0.10) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  animation: crt-interlace-shift 0.083s steps(1) infinite;
+}
+
+#crt-overlay-root[data-interlace] #crt-interlace-layer {
+  display: block;
+}
+
+@keyframes crt-interlace-shift {
+  0%  { background-position: 0 0;   }
+  50% { background-position: 0 1px; }
+}
+
+/* Signal bands – canvas element (JS-driven), inside curve-inner */
+#crt-signal-bands {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  pointer-events: none;
+  object-fit: fill;
 }
 
 /* VHS tape dropouts – random horizontal dark lines (worn tape) */
