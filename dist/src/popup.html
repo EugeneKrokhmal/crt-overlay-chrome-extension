@@ -3,282 +3,366 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CRT Overlay</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      width: 320px;
-      min-height: 360px;
-      margin: 0;
-      padding: 14px 16px;
-      font-family: "Press Start 2P", monospace;
-      font-size: 8px;
-      line-height: 1.6;
-      color: #fff;
-      background: #0066cc;
-      -webkit-font-smoothing: none;
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
-    }
-
-    .menu-header {
-      text-align: center;
-      margin-bottom: 14px;
-      font-size: 9px;
-      letter-spacing: 0.05em;
-    }
-
-    .menu-row {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-      gap: 8px;
-    }
-
-    .menu-row .arrow {
-      flex-shrink: 0;
-      width: 0;
-      height: 0;
-      border-top: 4px solid transparent;
-      border-bottom: 4px solid transparent;
-      border-left: 6px solid #fff;
-    }
-
-    .menu-row label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      text-transform: uppercase;
-    }
-
-    input[type="checkbox"] {
-      appearance: none;
-      -webkit-appearance: none;
-      width: 12px;
-      height: 12px;
-      border: 2px solid #fff;
-      background: transparent;
-      flex-shrink: 0;
-      cursor: pointer;
-    }
-    input[type="checkbox"]:checked {
-      background: #fff;
-    }
-
-    .track-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    .track-row span {
-      flex-shrink: 0;
-      text-transform: uppercase;
-      font-size: 7px;
-    }
-    .track-wrap {
-      flex: 1;
-      height: 14px;
-      border: 2px solid #fff;
-      background: #0066cc;
-      position: relative;
-      overflow: hidden;
-    }
-    .track-fill {
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      background: #fff;
-      width: 50%;
-      transition: width 0.05s linear;
-    }
-    input[type="range"] {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      opacity: 0;
-      cursor: pointer;
-    }
-    .track-row .track-wrap {
-      display: flex;
-      align-items: stretch;
-    }
-
-    .button-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 12px;
-      margin-bottom: 8px;
-    }
-    .crt-btn {
-      flex: 1;
-      font-family: "Press Start 2P", monospace;
-      font-size: 7px;
-      padding: 8px 6px;
-      border: 2px solid #fff;
-      background: transparent;
-      color: #fff;
-      cursor: pointer;
-      text-transform: uppercase;
-    }
-    .crt-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    .footer {
-      margin-top: 14px;
-      font-size: 6px;
-      text-transform: uppercase;
-      opacity: 0.9;
-    }
-  </style>
+  <title>CRT Monitor Overlay</title>
   <script type="module" crossorigin src="/src/popup.js"></script>
+  <link rel="stylesheet" crossorigin href="/popup.css">
 </head>
 <body>
-  <div class="menu-header">- MENU -</div>
+  <div class="popup">
+    <header class="header">
+      <div class="header-brand">
+        <img src="/icons/icon32.png" alt="" class="header-logo" width="28" height="28" />
+        <h1>CRT Monitor Overlay</h1>
+      </div>
+    </header>
 
-  <div class="menu-row">
-    <span class="arrow"></span>
-    <label for="crt-enabled">
-      <input type="checkbox" id="crt-enabled" />
-      <span id="overlay-label">OVERLAY: OFF</span>
-    </label>
-  </div>
+    <div class="divider"></div>
 
-  <div class="menu-row">
-    <span class="arrow"></span>
-    <label for="crt-sound-filter">
-      <input type="checkbox" id="crt-sound-filter" />
-      <span id="sound-label">VHS SOUND: OFF</span>
-    </label>
-  </div>
-  <div class="track-row">
-    <span>EFFECT</span>
-    <div class="track-wrap">
-      <div class="track-fill" id="sound-effect-fill"></div>
-      <input type="range" id="sound-effect-level" min="0" max="1" step="0.05" value="0.8" />
-    </div>
-  </div>
-  <div class="track-row">
-    <span>NOISE</span>
-    <div class="track-wrap">
-      <div class="track-fill" id="sound-noise-fill"></div>
-      <input type="range" id="sound-noise-level" min="0" max="1" step="0.05" value="0.6" />
-    </div>
-  </div>
-  <div class="track-row">
-    <span>OVRDRV</span>
-    <div class="track-wrap">
-      <div class="track-fill" id="sound-overdrive-fill"></div>
-      <input type="range" id="sound-overdrive-level" min="0" max="1" step="0.05" value="0" />
-    </div>
-  </div>
-  <div class="track-row">
-    <span>CHORUS</span>
-    <div class="track-wrap">
-      <div class="track-fill" id="sound-chorus-fill"></div>
-      <input type="range" id="sound-chorus-level" min="0" max="1" step="0.05" value="0" />
-    </div>
-  </div>
+    <section class="section">
+      <div class="toggle-row">
+        <label class="toggle-label" for="crt-enabled">Enable Overlay</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="crt-enabled" />
+          <span class="track"></span>
+          <span class="thumb"></span>
+        </label>
+      </div>
+    </section>
 
-  <div class="menu-row">
-    <span class="arrow"></span>
-    <label for="crt-vhs-glitches">
-      <input type="checkbox" id="crt-vhs-glitches" />
-      <span id="glitches-label">VHS GLITCHES: OFF</span>
-    </label>
-  </div>
-  <div class="track-row">
-    <span>PHASE</span>
-    <div class="track-wrap">
-      <div class="track-fill" id="glitch-phase-fill"></div>
-      <input type="range" id="glitch-phase-level" min="0" max="1" step="0.05" value="0.3" />
-    </div>
-  </div>
-  <div class="track-row">
-    <span>VID.NOISE</span>
-    <div class="track-wrap">
-      <div class="track-fill" id="glitch-noise-fill"></div>
-      <input type="range" id="glitch-noise-level" min="0" max="1" step="0.05" value="0.15" />
-    </div>
-  </div>
-  <div class="track-row">
-    <span>TRACK</span>
-    <div class="track-wrap">
-      <div class="track-fill" id="glitch-tracking-fill"></div>
-      <input type="range" id="glitch-tracking-level" min="0" max="1" step="0.05" value="0.5" />
-    </div>
-  </div>
-  <div class="track-row">
-    <span>WOBBLE</span>
-    <div class="track-wrap">
-      <div class="track-fill" id="glitch-wobble-fill"></div>
-      <input type="range" id="glitch-wobble-level" min="0" max="1" step="0.05" value="0.3" />
-    </div>
-  </div>
-  <div class="track-row">
-    <span>HEAD</span>
-    <div class="track-wrap">
-      <div class="track-fill" id="glitch-headswitch-fill"></div>
-      <input type="range" id="glitch-headswitch-level" min="0" max="1" step="0.05" value="0.25" />
-    </div>
-  </div>
-  <div class="track-row">
-    <span>RGB</span>
-    <div class="track-wrap">
-      <div class="track-fill" id="glitch-rgb-fill"></div>
-      <input type="range" id="glitch-rgb-level" min="0" max="1" step="0.05" value="0.35" />
-    </div>
-  </div>
-  <div class="track-row">
-    <span>DROP</span>
-    <div class="track-wrap">
-      <div class="track-fill" id="glitch-dropout-fill"></div>
-      <input type="range" id="glitch-dropout-level" min="0" max="1" step="0.05" value="0.2" />
-    </div>
-  </div>
-  <div class="track-row">
-    <span>REWIND</span>
-    <div class="track-wrap">
-      <div class="track-fill" id="glitch-rewind-fill"></div>
-      <input type="range" id="glitch-rewind-level" min="0" max="1" step="0.05" value="0.4" />
-    </div>
-  </div>
+    <div class="divider"></div>
 
-  <div class="track-row">
-    <span>SCANLINE</span>
-    <div class="track-wrap">
-      <div class="track-fill" id="scanline-fill"></div>
-      <input type="range" id="scanline" min="0" max="1" step="0.05" value="0.4" />
-    </div>
-  </div>
-  <div class="track-row">
-    <span>VIGNETTE</span>
-    <div class="track-wrap">
-      <div class="track-fill" id="vignette-fill"></div>
-      <input type="range" id="vignette" min="0" max="1" step="0.05" value="0.5" />
-    </div>
-  </div>
-  <div class="track-row">
-    <span>GLOW</span>
-    <div class="track-wrap">
-      <div class="track-fill" id="glow-fill"></div>
-      <input type="range" id="glow" min="0" max="0.8" step="0.05" value="0.15" />
-    </div>
-  </div>
+    <section class="section">
+      <h2 class="section-title">CRT Settings</h2>
 
-  <div class="button-row">
-    <button type="button" id="crt-reset-btn" class="crt-btn">RESET</button>
-    <button type="button" id="crt-random-btn" class="crt-btn">RANDOM</button>
+      <div class="slider-row">
+        <span class="slider-label">Scanlines</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="scanline-fill"></div>
+          <input type="range" id="scanline" min="0" max="1" step="0.01" value="0.4" />
+        </div>
+        <span class="slider-pct" data-for="scanline">40%</span>
+      </div>
+
+      <div class="slider-row">
+        <span class="slider-label">Curvature</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="vignette-fill"></div>
+          <input type="range" id="vignette" min="0" max="1" step="0.01" value="0.5" />
+        </div>
+        <span class="slider-pct" data-for="vignette">50%</span>
+      </div>
+
+      <div class="slider-row">
+        <span class="slider-label">Glow</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="glow-fill"></div>
+          <input type="range" id="glow" min="0" max="0.8" step="0.01" value="0.15" />
+        </div>
+        <span class="slider-pct" data-for="glow">19%</span>
+      </div>
+
+      <div class="slider-row">
+        <span class="slider-label">Phosphor</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="phosphor-fill"></div>
+          <input type="range" id="phosphor" min="0" max="1" step="0.01" value="0.4" />
+        </div>
+        <span class="slider-pct" data-for="phosphor">40%</span>
+      </div>
+
+      <div class="slider-row" style="margin-top:4px">
+        <span class="slider-label">Flicker</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="flicker-intensity-fill"></div>
+          <input type="range" id="flicker-intensity" min="0" max="1" step="0.01" value="0" />
+        </div>
+        <span class="slider-pct" data-for="flicker-intensity">0%</span>
+      </div>
+
+      <div class="toggle-row" style="margin-top:8px">
+        <label class="toggle-label" for="crt-interlace">Interlace</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="crt-interlace" />
+          <span class="track"></span>
+          <span class="thumb"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row" style="margin-top:8px">
+        <label class="toggle-label" for="crt-signal-bands">Signal Bands</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="crt-signal-bands" />
+          <span class="track"></span>
+          <span class="thumb"></span>
+        </label>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <section class="section">
+      <div class="section-header-row">
+        <h2 class="section-title">VHS Audio (Optional)</h2>
+        <label class="toggle-switch">
+          <input type="checkbox" id="crt-sound-filter" />
+          <span class="track"></span>
+          <span class="thumb"></span>
+        </label>
+      </div>
+
+      <div class="slider-row">
+        <span class="slider-label">Hiss</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="sound-noise-fill"></div>
+          <input type="range" id="sound-noise-level" min="0" max="1" step="0.01" value="0.6" />
+        </div>
+        <span class="slider-pct" data-for="sound-noise-level">60%</span>
+      </div>
+
+      <div class="slider-row">
+        <span class="slider-label">Warmth</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="sound-effect-fill"></div>
+          <input type="range" id="sound-effect-level" min="0" max="1" step="0.01" value="0.8" />
+        </div>
+        <span class="slider-pct" data-for="sound-effect-level">80%</span>
+      </div>
+
+      <div class="slider-row">
+        <span class="slider-label">Intensity</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="sound-overdrive-fill"></div>
+          <input type="range" id="sound-overdrive-level" min="0" max="1" step="0.01" value="0" />
+        </div>
+        <span class="slider-pct" data-for="sound-overdrive-level">0%</span>
+      </div>
+
+      <div class="slider-row">
+        <span class="slider-label">Chorus</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="sound-chorus-fill"></div>
+          <input type="range" id="sound-chorus-level" min="0" max="1" step="0.01" value="0" />
+        </div>
+        <span class="slider-pct" data-for="sound-chorus-level">0%</span>
+      </div>
+
+      <div class="slider-row">
+        <span class="slider-label">Wow/Flutter</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="wow-flutter-fill"></div>
+          <input type="range" id="wow-flutter-level" min="0" max="1" step="0.01" value="0" />
+        </div>
+        <span class="slider-pct" data-for="wow-flutter-level">0%</span>
+      </div>
+
+      <div class="toggle-row" style="margin-top:12px">
+        <label class="toggle-label" for="crt-sound-mono">Mono</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="crt-sound-mono" />
+          <span class="track"></span>
+          <span class="thumb"></span>
+        </label>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <section class="section">
+      <div class="section-header-row">
+        <h2 class="section-title">VHS Glitches</h2>
+        <label class="toggle-switch">
+          <input type="checkbox" id="crt-vhs-glitches" />
+          <span class="track"></span>
+          <span class="thumb"></span>
+        </label>
+      </div>
+
+      <div class="slider-row">
+        <span class="slider-label">Phase</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="glitch-phase-fill"></div>
+          <input type="range" id="glitch-phase-level" min="0" max="1" step="0.01" value="0.3" />
+        </div>
+        <span class="slider-pct" data-for="glitch-phase-level">30%</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Vid. Noise</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="glitch-noise-fill"></div>
+          <input type="range" id="glitch-noise-level" min="0" max="1" step="0.01" value="0.15" />
+        </div>
+        <span class="slider-pct" data-for="glitch-noise-level">15%</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Track</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="glitch-tracking-fill"></div>
+          <input type="range" id="glitch-tracking-level" min="0" max="1" step="0.01" value="0.5" />
+        </div>
+        <span class="slider-pct" data-for="glitch-tracking-level">50%</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Wobble</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="glitch-wobble-fill"></div>
+          <input type="range" id="glitch-wobble-level" min="0" max="1" step="0.01" value="0.3" />
+        </div>
+        <span class="slider-pct" data-for="glitch-wobble-level">30%</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Head</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="glitch-headswitch-fill"></div>
+          <input type="range" id="glitch-headswitch-level" min="0" max="1" step="0.01" value="0.25" />
+        </div>
+        <span class="slider-pct" data-for="glitch-headswitch-level">25%</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">RGB</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="glitch-rgb-fill"></div>
+          <input type="range" id="glitch-rgb-level" min="0" max="1" step="0.01" value="0.35" />
+        </div>
+        <span class="slider-pct" data-for="glitch-rgb-level">35%</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Drop</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="glitch-dropout-fill"></div>
+          <input type="range" id="glitch-dropout-level" min="0" max="1" step="0.01" value="0.2" />
+        </div>
+        <span class="slider-pct" data-for="glitch-dropout-level">20%</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Rewind</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="glitch-rewind-fill"></div>
+          <input type="range" id="glitch-rewind-level" min="0" max="1" step="0.01" value="0.4" />
+        </div>
+        <span class="slider-pct" data-for="glitch-rewind-level">40%</span>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <section class="section">
+      <h2 class="section-title">VHS HUD</h2>
+
+      <div class="toggle-row">
+        <label class="toggle-label" for="crt-vhs-timestamp">Timestamp</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="crt-vhs-timestamp" />
+          <span class="track"></span>
+          <span class="thumb"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row" style="margin-top:8px">
+        <label class="toggle-label" for="crt-tape-counter">Tape Counter</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="crt-tape-counter" />
+          <span class="track"></span>
+          <span class="thumb"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row" style="margin-top:8px">
+        <label class="toggle-label" for="crt-channel-static">Channel Static</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="crt-channel-static" />
+          <span class="track"></span>
+          <span class="thumb"></span>
+        </label>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <section class="section">
+      <h2 class="section-title">Image Filters</h2>
+
+      <div class="slider-row">
+        <span class="slider-label">Saturation</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="filter-saturation-fill"></div>
+          <input type="range" id="filter-saturation" min="0" max="2" step="0.01" value="1" />
+        </div>
+        <span class="slider-pct" data-for="filter-saturation">50%</span>
+      </div>
+
+      <div class="slider-row">
+        <span class="slider-label">Contrast</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="filter-contrast-fill"></div>
+          <input type="range" id="filter-contrast" min="0.5" max="2" step="0.01" value="1" />
+        </div>
+        <span class="slider-pct" data-for="filter-contrast">33%</span>
+      </div>
+
+      <div class="slider-row">
+        <span class="slider-label">Sharpness</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="filter-sharpness-fill"></div>
+          <input type="range" id="filter-sharpness" min="0" max="1" step="0.01" value="0" />
+        </div>
+        <span class="slider-pct" data-for="filter-sharpness">0%</span>
+      </div>
+
+      <div class="slider-row">
+        <span class="slider-label">Hue</span>
+        <div class="slider-wrap">
+          <div class="slider-fill" id="filter-hue-fill"></div>
+          <input type="range" id="filter-hue" min="0" max="360" step="1" value="0" />
+        </div>
+        <span class="slider-pct" data-for="filter-hue">0%</span>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <section class="section presets-section">
+      <h2 class="section-title">Presets</h2>
+      <div class="preset-row">
+        <button type="button" class="btn btn-compact" id="preset-export-btn">Export</button>
+        <button type="button" class="btn btn-compact" id="preset-import-btn">Import</button>
+      </div>
+      <select id="preset-select" class="preset-select" aria-label="Load preset">
+        <option value="">— Custom —</option>
+      </select>
+      <div class="preset-row">
+        <input type="text" id="preset-name" class="preset-input" placeholder="Preset name" maxlength="32" aria-label="Preset name" />
+        <button type="button" class="btn btn-compact" id="preset-save-btn">Save</button>
+      </div>
+      <div class="preset-actions">
+        <button type="button" class="btn" id="preset-delete-btn">Delete</button>
+        <button type="button" class="btn" id="crt-reset-btn">Reset</button>
+        <button type="button" class="btn" id="crt-random-btn">Random</button>
+      </div>
+      <p class="preset-hint" id="preset-status" aria-live="polite"></p>
+    </section>
+
+    <div class="divider"></div>
+
+    <footer class="footer">
+      <p class="footer-text">Settings are saved locally and apply to all tabs.</p>
+      <button type="button" class="icon-btn share-btn" id="share-btn" aria-label="Copy settings to clipboard" title="Share current settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="18" cy="5" r="3"/>
+          <circle cx="6" cy="12" r="3"/>
+          <circle cx="18" cy="19" r="3"/>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        </svg>
+      </button>
+      <button type="button" class="icon-btn save-btn" id="save-btn" aria-label="Save settings" title="Save now">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+      </button>
+    </footer>
   </div>
-  <div class="footer">ALL TABS · CLICKS PASS THRU</div>
 
 </body>
 </html>
