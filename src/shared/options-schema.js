@@ -14,6 +14,8 @@ export const OPTION_ENTRIES = [
   { name: "SOUND_NOISE_LEVEL", key: "soundNoiseLevel", default: 0.6, type: "slider", popupId: "sound-noise-level", fillId: "sound-noise-fill", min: 0, max: 1 },
   { name: "SOUND_OVERRIDE_LEVEL", key: "soundOverdriveLevel", default: 0, type: "slider", popupId: "sound-overdrive-level", fillId: "sound-overdrive-fill", min: 0, max: 1 },
   { name: "SOUND_CHORUS_LEVEL", key: "soundChorusLevel", default: 0, type: "slider", popupId: "sound-chorus-level", fillId: "sound-chorus-fill", min: 0, max: 1 },
+  { name: "WOW_FLUTTER", key: "wowFlutter", default: 0, type: "slider", popupId: "wow-flutter-level", fillId: "wow-flutter-fill", min: 0, max: 1, contentKey: "wowFlutter" },
+  { name: "SOUND_MONO", key: "soundMono", default: false, type: "checkbox", popupId: "crt-sound-mono", contentKey: "soundMono" },
   { name: "VHS_GLITCHES", key: "vhsGlitchesEnabled", default: false, type: "checkbox", popupId: "crt-vhs-glitches", contentKey: "vhsGlitches" },
   { name: "GLITCH_PHASE_LEVEL", key: "glitchPhaseLevel", default: 0.3, type: "slider", popupId: "glitch-phase-level", fillId: "glitch-phase-fill", min: 0, max: 1 },
   { name: "GLITCH_NOISE_LEVEL", key: "glitchNoiseLevel", default: 0.15, type: "slider", popupId: "glitch-noise-level", fillId: "glitch-noise-fill", min: 0, max: 1 },
@@ -26,6 +28,17 @@ export const OPTION_ENTRIES = [
   { name: "SCANLINE", key: "scanlineIntensity", default: 0.4, type: "slider", popupId: "scanline", fillId: "scanline-fill", min: 0, max: 1, optionName: "scanline" },
   { name: "VIGNETTE", key: "vignetteIntensity", default: 0.5, type: "slider", popupId: "vignette", fillId: "vignette-fill", min: 0, max: 1, optionName: "vignette" },
   { name: "GLOW", key: "glowIntensity", default: 0.15, type: "slider", popupId: "glow", fillId: "glow-fill", min: 0, max: 0.8, optionName: "glow" },
+  { name: "PHOSPHOR", key: "phosphorIntensity", default: 0.4, type: "slider", popupId: "phosphor", fillId: "phosphor-fill", min: 0, max: 1, optionName: "phosphor" },
+  { name: "FLICKER_INTENSITY", key: "flickerIntensity", default: 0, type: "slider", popupId: "flicker-intensity", fillId: "flicker-intensity-fill", min: 0, max: 1, contentKey: "flickerIntensity" },
+  { name: "INTERLACE", key: "interlace", default: false, type: "checkbox", popupId: "crt-interlace", contentKey: "interlace" },
+  { name: "SIGNAL_BANDS", key: "signalBands", default: false, type: "checkbox", popupId: "crt-signal-bands", contentKey: "signalBands" },
+  { name: "FILTER_SATURATION", key: "filterSaturation", default: 1, type: "slider", popupId: "filter-saturation", fillId: "filter-saturation-fill", min: 0, max: 2, contentKey: "filterSaturation" },
+  { name: "FILTER_CONTRAST", key: "filterContrast", default: 1, type: "slider", popupId: "filter-contrast", fillId: "filter-contrast-fill", min: 0.5, max: 2, contentKey: "filterContrast" },
+  { name: "FILTER_SHARPNESS", key: "filterSharpness", default: 0, type: "slider", popupId: "filter-sharpness", fillId: "filter-sharpness-fill", min: 0, max: 1, contentKey: "filterSharpness" },
+  { name: "FILTER_HUE", key: "filterHue", default: 0, type: "slider", popupId: "filter-hue", fillId: "filter-hue-fill", min: 0, max: 360, contentKey: "filterHue" },
+  { name: "VHS_TIMESTAMP", key: "vhsTimestamp", default: false, type: "checkbox", popupId: "crt-vhs-timestamp", contentKey: "vhsTimestamp" },
+  { name: "TAPE_COUNTER", key: "tapeCounter", default: false, type: "checkbox", popupId: "crt-tape-counter", contentKey: "tapeCounter" },
+  { name: "CHANNEL_STATIC", key: "channelStatic", default: false, type: "checkbox", popupId: "crt-channel-static", contentKey: "channelStatic" },
 ];
 
 const entries = OPTION_ENTRIES;
