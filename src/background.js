@@ -1,9 +1,10 @@
 /**
- * Service worker: install defaults and keyboard command to toggle overlay.
+ * Service worker: install defaults, keyboard command, and GIF capture orchestration.
  */
 import { STORAGE_KEYS, DEFAULT_OPTIONS, MESSAGE } from "./shared/config.js";
 import { storage, tabs } from "./shared/chrome-facade.js";
 import { logExtensionWarning } from "./shared/logger.js";
+
 
 const COMMAND_TOGGLE = "toggle-crt";
 
@@ -18,7 +19,15 @@ function broadcastToggle(enabled) {
   );
 }
 
+function enableSidePanelOnActionClick() {
+  if (!chrome.sidePanel?.setPanelBehavior) return;
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+}
+
+enableSidePanelOnActionClick();
+
 chrome.runtime.onInstalled.addListener(() => {
+  enableSidePanelOnActionClick();
   storage.get(null, (data) => {
     const next = { ...DEFAULT_OPTIONS };
     Object.keys(next).forEach((k) => {
