@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="casette.png" width="96" alt="CRT Monitor Overlay">
+  <img src="docs/icon.png" width="128" alt="CRT Monitor Overlay">
 </p>
 
 # CRT Monitor Overlay
@@ -8,11 +8,11 @@ Chrome extension that turns any tab into a glowing CRT / VHS display — scanlin
 
 **Shortcut:** `Ctrl+Shift+C` (Windows/Linux) or `⌘+Shift+C` (Mac) toggles the overlay.
 
+## Screenshots
+
 <p align="center">
   <img src="docs/screenshots/crt-overlay.png" width="720" alt="Before and after CRT overlay on a website">
 </p>
-
-## Screenshots
 
 <p align="center">
   <img src="docs/screenshots/made-for-anime.png" width="720" alt="CRT overlay on anime — made for anime">
